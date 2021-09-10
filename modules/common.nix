@@ -7,6 +7,7 @@
     gnutls
     htop
     pass
+    pinentry
     vim
     vimPlugins.vim-nix
     wget

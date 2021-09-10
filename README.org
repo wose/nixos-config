@@ -361,12 +361,14 @@ environment.systemPackages = with pkgs; [
 We disable password authentication and root login. This will also open port 22
 in the firewall.
 
-#+begin_src nix :noweb-ref services :noweb-sep ""
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
 services.openssh = {
   enable = true;
   permitRootLogin = "no";
   passwordAuthentication = false;
-}
+};
+
 #+end_src
 
 * Common Settings
@@ -395,6 +397,7 @@ environment.systemPackages = with pkgs; [
   gnutls
   htop
   pass
+  pinentry
   vim
   vimPlugins.vim-nix
   wget
@@ -406,7 +409,7 @@ environment.systemPackages = with pkgs; [
 ** wose
 
 #+begin_src nix :tangle ./users/wose.nix :mkdirp yes
-{ ...  }:
+{ config, ... }:
 
 {
   users.users.wose = {
@@ -425,7 +428,7 @@ environment.systemPackages = with pkgs; [
 ** linda
 
 #+begin_src nix :tangle ./users/linda.nix :mkdirp yes
-{ ...  }:
+{ config, ... }:
 
 {
   users.users.linda = {

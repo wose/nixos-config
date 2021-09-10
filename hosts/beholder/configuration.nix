@@ -99,6 +99,12 @@
   ];
 
   
+  services.openssh = {
+    enable = true;
+    permitRootLogin = "no";
+    passwordAuthentication = false;
+  };
+  
 
   system.stateVersion = "21.05";
 }

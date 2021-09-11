@@ -23,4 +23,7 @@
   };
   
 
+  
+  users.mutableUsers = true;
+  
 }

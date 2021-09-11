@@ -2,6 +2,7 @@
 
 {
   users.users.wose = {
+      initalHashedPassword = "$6$KQo7A0p2cYsB3$Kpw2XUByh1gPiUA/JQC63w7WlVOrsWX5HqRudSqxjzBJY.R/hiyYUW24HAZSP54iFxUCrqRYDhghM3PBpB8XN1";
       isNormalUser = true;
       extraGroups = [ "wheel" ];
       openssh.authorizedKeys.keys = [

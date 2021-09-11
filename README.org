@@ -381,6 +381,8 @@ modules and import it in each host.
 
 {
   <<common/systempackages>>
+
+  <<common/nix>>
 }
 #+end_src
 
@@ -403,6 +405,22 @@ environment.systemPackages = with pkgs; [
   wget
   zsh
 ];
+#+end_src
+
+** Nix
+
+Since nix flakes are not stable yet, we need to make sure we get =nix= in
+version =>=2.4=.
+
+#+begin_src nix :noweb-ref common/nix :noweb-sep ""
+
+nix = {
+  package = pkgs.nixUnstable;
+  extraOptions = ''
+    experimental-features = nix-command flakes
+  '';
+};
+
 #+end_src
 
 * Users

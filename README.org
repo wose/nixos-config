@@ -45,9 +45,13 @@ time =org-babel-tangle= is called.
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-21.05";
+    mailserver = {
+      url = "gitlab:simple-nixos-mailserver/nixos-mailserver";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs }: {
+  outputs = { self, mailserver, nixpkgs }: {
     nixosConfigurations = {
       <<flake/hosts>>
     };
@@ -157,6 +161,7 @@ Add this host to the flakes =nixosConfigurations=.
 beholder = nixpkgs.lib.nixosSystem {
   system = "x86_64-linux";
   modules = [
+    mailserver.nixosModules.mailserver
     ./hosts/beholder/configuration.nix
   ];
 };
@@ -165,7 +170,7 @@ beholder = nixpkgs.lib.nixosSystem {
 
 
 #+begin_src nix :noweb yes :tangle ./hosts/beholder/configuration.nix :mkdirp yes
-{ config, pkgs, ... }:
+{ config, pkgs, mailserver, ... }:
 
 {
   imports = [
@@ -372,7 +377,6 @@ services.openssh = {
 
 #+end_src
 ***** nginx
-
 ******    erlija.de
 
 #+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
@@ -386,6 +390,50 @@ services.nginx.virtualHosts."erlija.de" = {
 
 #+end_src
 
+***** Mailserver
+
+Local user need to generate the corresponding hashed password files with.
+
+#+begin_src sh
+nix shell nixpkgs#apacheHttpd
+htpasswd -nbB "" "super secret password" | cut -d: -f2 > ~/.hashed_passwd_domain
+#+end_src
+
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
+mailserver = {
+  enable = true;
+  localDnsResolver = false;
+
+  enableImap = true;
+  enablePop3 = false;
+  enableImapSsl = true;
+  enablePop3Ssl = false;
+
+  fqdn = "beholder.zuendmasse.de";
+  domains = [ "erlija.de" ];
+
+  loginAccounts = {
+    "wose@erlija.de" = {
+      hashedPasswordFile = "/home/wose/.hashed_passwd_erlija.de";
+      aliases = [
+        "postmaster@erlija.de"
+        "abuse@erlija.de"
+      ];
+    };
+
+    "linda@erlija.de" = {
+      hashedPasswordFile = "/home/linda/.hashed_passwd_erlija.de";
+      aliases = [
+        "blog.erlija.de"
+      ];
+    };
+  };
+
+  certificateScheme = 3;
+};
+
+#+end_src
 * Modules
 ** Common Settings
 

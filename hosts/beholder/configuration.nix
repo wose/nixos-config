@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, mailserver, ... }:
 
 {
   imports = [
@@ -111,6 +111,38 @@
     enableACME = true;
     forceSSL = true;
     root = "/var/www/erlija.de";
+  };
+  
+  mailserver = {
+    enable = true;
+    localDnsResolver = false;
+  
+    enableImap = true;
+    enablePop3 = false;
+    enableImapSsl = true;
+    enablePop3Ssl = false;
+  
+    fqdn = "beholder.zuendmasse.de";
+    domains = [ "erlija.de" ];
+  
+    loginAccounts = {
+      "wose@erlija.de" = {
+        hashedPasswordFile = "/home/wose/.hashed_passwd_erlija.de";
+        aliases = [
+          "postmaster@erlija.de"
+          "abuse@erlija.de"
+        ];
+      };
+  
+      "linda@erlija.de" = {
+        hashedPasswordFile = "/home/linda/.hashed_passwd_erlija.de";
+        aliases = [
+          "blog.erlija.de"
+        ];
+      };
+    };
+  
+    certificateScheme = 3;
   };
   
 

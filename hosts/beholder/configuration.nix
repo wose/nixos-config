@@ -145,6 +145,8 @@
     certificateScheme = 3;
   };
   
+  services.fail2ban.enable = true;
+  
 
   system.stateVersion = "21.05";
 }

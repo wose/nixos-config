@@ -434,6 +434,15 @@ mailserver = {
 };
 
 #+end_src
+
+***** Fail2ban
+
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
+services.fail2ban.enable = true;
+
+#+end_src
+
 * Modules
 ** Common Settings
 

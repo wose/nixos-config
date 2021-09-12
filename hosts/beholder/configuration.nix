@@ -4,6 +4,7 @@
   imports = [
     ./hardware-configuration.nix
     ../../modules/common.nix
+    ../../modules/nginx.nix
     ../../users/wose.nix
     ../../users/linda.nix
   ];
@@ -103,6 +104,13 @@
     enable = true;
     permitRootLogin = "no";
     passwordAuthentication = false;
+  };
+  
+  services.nginx.virtualHosts."erlija.de" = {
+    serverAliases = [ "www.erlija.de" "erlija.de" ];
+    enableACME = true;
+    forceSSL = true;
+    root = "/var/www/erlija.de";
   };
   
 

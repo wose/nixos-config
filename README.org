@@ -171,6 +171,7 @@ beholder = nixpkgs.lib.nixosSystem {
   imports = [
     ./hardware-configuration.nix
     ../../modules/common.nix
+    ../../modules/nginx.nix
     ../../users/wose.nix
     ../../users/linda.nix
   ];
@@ -370,8 +371,23 @@ services.openssh = {
 };
 
 #+end_src
+***** nginx
 
-* Common Settings
+******    erlija.de
+
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
+services.nginx.virtualHosts."erlija.de" = {
+  serverAliases = [ "www.erlija.de" "erlija.de" ];
+  enableACME = true;
+  forceSSL = true;
+  root = "/var/www/erlija.de";
+};
+
+#+end_src
+
+* Modules
+** Common Settings
 
 We'll need/want somethings to be available on all hosts. We can export it into
 modules and import it in each host.
@@ -388,8 +404,7 @@ modules and import it in each host.
 }
 #+end_src
 
-
-** System Packages
+*** System Packages
 
 To be able to acutally do something with a freshly installed system we need some
 tools.
@@ -409,7 +424,7 @@ environment.systemPackages = with pkgs; [
 ];
 #+end_src
 
-** Nix
+*** Nix
 
 Since nix flakes are not stable yet, we need to make sure we get =nix= in
 version =>=2.4=.
@@ -425,13 +440,64 @@ nix = {
 
 #+end_src
 
-** User configuration
+*** User configuration
 
 Let's make sure user can manage their passwords outside of this configuration.
 
 #+begin_src nix :noweb-ref common/userconfig :noweb-sep ""
 
 users.mutableUsers = true;
+
+#+end_src
+** nginx
+
+#+begin_src nix :tangle ./modules/nginx.nix :noweb yes
+{ pkgs, lib, ... }:
+
+{
+  <<nginx/basic>>
+}
+#+end_src
+
+*** Firewall
+
+#+begin_src nix :noweb-ref nginx/basic :noweb-sep ""
+
+networking.firewall.allowedTCPPorts = [ 80 443 ];
+
+#+end_src
+
+*** SSL
+
+Enable the *Let's Encrypt* CA to be able to autogenerate certificates for
+virtual hosts.
+
+#+begin_src nix :noweb-ref nginx/basic :noweb-sep ""
+
+security.acme.email = lib.mkDefault "ca@zuendmasse.de";
+security.acme.acceptTerms = true;
+
+#+end_src
+
+With this we can use =services.nginx.virtualHosts.<name>.enableACME= to enable
+certificate generation for the corresponding virtual host.
+
+*** Basic
+
+We enable the nginx service and activate some recommended settings.
+
+#+begin_src nix :noweb-ref nginx/basic :noweb-sep ""
+
+services.nginx = {
+  enable = true;
+
+  recommendedGzipSettings = true;
+  recommendedOptimisation = true;
+  recommendedProxySettings = true;
+  recommendedTlsSettings = true;
+
+  sslCiphers = "TLSv1.2+HIGH+ECDHE@STRENGTH";
+};
 
 #+end_src
 

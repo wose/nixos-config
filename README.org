@@ -392,11 +392,11 @@ services.nginx.virtualHosts."erlija.de" = {
 
 ***** Mailserver
 
-Local user need to generate the corresponding hashed password files with.
+Local user need to generate the corresponding hashed password files with. This
+file *must* be present or the service will not start.
 
 #+begin_src sh
-nix shell nixpkgs#apacheHttpd
-htpasswd -nbB "" "super secret password" | cut -d: -f2 > ~/.hashed_passwd_domain
+nix shell nixpkgs#apacheHttpd -c htpasswd -nbB "" "super secret password" | cut -d: -f2 > ~/.hashed_passwd_domain
 #+end_src
 
 #+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
@@ -425,7 +425,7 @@ mailserver = {
     "linda@erlija.de" = {
       hashedPasswordFile = "/home/linda/.hashed_passwd_erlija.de";
       aliases = [
-        "blog.erlija.de"
+        "blog@erlija.de"
       ];
     };
   };

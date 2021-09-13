@@ -137,7 +137,7 @@
       "linda@erlija.de" = {
         hashedPasswordFile = "/home/linda/.hashed_passwd_erlija.de";
         aliases = [
-          "blog.erlija.de"
+          "blog@erlija.de"
         ];
       };
     };

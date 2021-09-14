@@ -123,7 +123,7 @@
     enablePop3Ssl = false;
   
     fqdn = "beholder.zuendmasse.de";
-    domains = [ "erlija.de" ];
+    domains = [ "braunglasmafia.de" "erlija.de" ];
   
     loginAccounts = {
       "wose@erlija.de" = {
@@ -131,6 +131,10 @@
         aliases = [
           "postmaster@erlija.de"
           "abuse@erlija.de"
+          "webmaster@erlija,de"
+          "borsti@braunglasmafia.de"
+          "postmaster@braunglasmafia.de"
+          "abuse@braunglasmafia.de"
         ];
       };
   

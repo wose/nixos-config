@@ -151,6 +151,60 @@
   
   services.fail2ban.enable = true;
   
+  services.nextcloud = {
+    enable = true;
+    package = pkgs.nextcloud22;
+    hostName = "cloud.zuendmasse.de";
+    https = true;
+  
+    caching = {
+      apcu = true;
+      memcached = true;
+      redis = false;
+    };
+  
+    config = {
+      adminuser = "admin";
+      adminpassFile = "/etc/secrets/nextcloud-pass";
+      dbtype = "pgsql";
+      dbname = "nextcloud";
+      dbuser = "nextcloud";
+      dbpassFile = "/etc/secrets/psql-pass";
+      dbhost = "/run/postgresql";
+      dbtableprefix = "oc_";
+    };
+  
+    autoUpdateApps = {
+      enable = true;
+      startAt = "04:00:00";
+    };
+  
+    maxUploadSize = "2048M";
+  };
+  
+  services.postgresql = {
+    enable = true;
+    ensureDatabases = [ "nextcloud" ];
+    ensureUsers = [
+      { name = "nextcloud";
+        ensurePermissions."DATABASE nextcloud" = "ALL PRIVILEGES";
+      }
+    ];
+  };
+  
+  systemd.services."nextcloud-setup" = {
+    requires = ["postgresql.service"];
+    after = ["postgresql.service"];
+  };
+  
+  services.nginx.virtualHosts."cloud.zuendmasse.de" = {
+    enableACME = true;
+    forceSSL = true;
+    extraConfig = ''
+      add_header Strict-Transport-Security "max-age=31536000" always;
+    '';
+  };
+  
 
   system.stateVersion = "21.05";
 }

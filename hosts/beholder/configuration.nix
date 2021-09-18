@@ -149,6 +149,73 @@
     certificateScheme = 3;
   };
   
+  networking.firewall.allowedTCPPorts = [ 8448 ];
+  
+  services.matrix-synapse = {
+    enable = true;
+    database_type = "sqlite3";
+    server_name = "zuendmasse.de";
+  
+    listeners = [
+      {
+        port = 8008;
+        bind_address = "::1";
+        type = "http";
+        tls = false;
+        x_forwarded = true;
+        resources = [
+          {
+            names = [ "client" "federation" ];
+            compress = false;
+          }
+        ];
+      }
+    ];
+  
+    extraConfig = ''
+      max_upload_size: "512M"
+    '';
+  
+    allow_guest_access = false;
+    enable_registration = false;
+  };
+  
+  services.nginx.virtualHosts."zuendmasse.de" = {
+    forceSSL = true;
+    enableACME = true;
+  
+    listen = [
+      { addr = "[::]";    port = 443; ssl = true; }
+      { addr = "0.0.0.0"; port = 443; ssl = true; }
+      { addr = "[::]";    port = 8448; ssl = true; }
+      { addr = "0.0.0.0"; port = 8448; ssl = true; }
+    ];
+  
+    locations."/_matrix" = {
+      proxyPass = "http://localhost:8008";
+    };
+  
+    locations."= /.well-known/matrix/server".extraConfig =
+      let
+        server = { "m.server" = "zuendmase.de:8448"; };
+      in ''
+        add_header Content-Type application/json;
+        return 200 '${builtins.toJSON server}';
+      '';
+  
+    locations."= /.well-known/matrix/client".extraConfig =
+      let
+        client = {
+          "m.homeserver" = { "base_url" = "https://zuendmasse.de:8448"; };
+          "m.identity_server" = { "base_url" = "https://vector.im"; };
+        };
+      in ''
+        add_header Content-Type application/json;
+        add_header Access-Control-Allow-Origin *;
+        return 200 '${builtins.toJSON client}';
+      '';
+  };
+  
   services.fail2ban.enable = true;
   
   services.nextcloud = {

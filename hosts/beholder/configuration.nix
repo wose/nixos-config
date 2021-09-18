@@ -113,6 +113,50 @@
     root = "/var/www/erlija.de";
   };
   
+  services.nginx.virtualHosts."zuendmasse.de" = {
+    serverAliases = [ "zuendmasse.de" "www.zuendmasse.de" ];
+    enableACME = true;
+    forceSSL = true;
+  
+    locations."/" = {
+      root = "/var/www/zuendmasse.de";
+    };
+  
+    listen = [
+      { addr = "[::]";    port = 80; ssl = false; }
+      { addr = "0.0.0.0"; port = 80; ssl = false; }
+      { addr = "[::]";    port = 443; ssl = true; }
+      { addr = "0.0.0.0"; port = 443; ssl = true; }
+      { addr = "[::]";    port = 8448; ssl = true; }
+      { addr = "0.0.0.0"; port = 8448; ssl = true; }
+    ];
+  
+    locations."/_matrix" = {
+      proxyPass = "http://localhost:8008";
+    };
+  
+    locations."= /.well-known/matrix/server".extraConfig =
+      let
+        server = { "m.server" = "zuendmase.de:8448"; };
+      in ''
+        add_header Content-Type application/json;
+        return 200 '${builtins.toJSON server}';
+      '';
+  
+    locations."= /.well-known/matrix/client".extraConfig =
+      let
+        client = {
+          "m.homeserver" = { "base_url" = "https://zuendmasse.de:8448"; };
+          "m.identity_server" = { "base_url" = "https://vector.im"; };
+        };
+      in ''
+        add_header Content-Type application/json;
+        add_header Access-Control-Allow-Origin *;
+        return 200 '${builtins.toJSON client}';
+      '';
+  
+  };
+  
   mailserver = {
     enable = true;
     localDnsResolver = false;
@@ -178,42 +222,6 @@
   
     allow_guest_access = false;
     enable_registration = false;
-  };
-  
-  services.nginx.virtualHosts."zuendmasse.de" = {
-    forceSSL = true;
-    enableACME = true;
-  
-    listen = [
-      { addr = "[::]";    port = 443; ssl = true; }
-      { addr = "0.0.0.0"; port = 443; ssl = true; }
-      { addr = "[::]";    port = 8448; ssl = true; }
-      { addr = "0.0.0.0"; port = 8448; ssl = true; }
-    ];
-  
-    locations."/_matrix" = {
-      proxyPass = "http://localhost:8008";
-    };
-  
-    locations."= /.well-known/matrix/server".extraConfig =
-      let
-        server = { "m.server" = "zuendmase.de:8448"; };
-      in ''
-        add_header Content-Type application/json;
-        return 200 '${builtins.toJSON server}';
-      '';
-  
-    locations."= /.well-known/matrix/client".extraConfig =
-      let
-        client = {
-          "m.homeserver" = { "base_url" = "https://zuendmasse.de:8448"; };
-          "m.identity_server" = { "base_url" = "https://vector.im"; };
-        };
-      in ''
-        add_header Content-Type application/json;
-        add_header Access-Control-Allow-Origin *;
-        return 200 '${builtins.toJSON client}';
-      '';
   };
   
   services.fail2ban.enable = true;

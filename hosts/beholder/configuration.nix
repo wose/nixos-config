@@ -193,7 +193,7 @@
     certificateScheme = 3;
   };
   
-  networking.firewall.allowedTCPPorts = [ 8448 ];
+  networking.firewall.allowedTCPPorts = [ 8448 1965];
   
   services.matrix-synapse = {
     enable = true;
@@ -279,6 +279,18 @@
       add_header Strict-Transport-Security "max-age=31536000" always;
     '';
   };
+  
+  services.molly-brown = {
+    hostName = "zuendmasse.de";
+    enable = true;
+    certPath = "/var/lib/acme/zuendmasse.de/cert.pem";
+    keyPath = "/var/lib/acme/zuendmasse.de/key.pem";
+    docBase = "/var/gemini/zuendmasse.de";
+  };
+  
+  systemd.services.molly-brown.serviceConfig.SupplementaryGroups = [ config.security.acme.certs."zuendmasse.de".group ];
+  
+  #networking.firewall.allowedTCPPorts = [ 1965 ];
   
 
   system.stateVersion = "21.05";

@@ -498,7 +498,7 @@ already in the datebase we don't need to enable any type of registration. The
 
 #+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
 
-networking.firewall.allowedTCPPorts = [ 8448 ];
+networking.firewall.allowedTCPPorts = [ 8448 1965];
 
 services.matrix-synapse = {
   enable = true;
@@ -600,6 +600,42 @@ services.nginx.virtualHosts."cloud.zuendmasse.de" = {
     add_header Strict-Transport-Security "max-age=31536000" always;
   '';
 };
+
+#+end_src
+
+***** Gemini
+
+NixOS has service options to configure the Gemini server =molly-brown=. This
+server doesn't support virtual hosts but since we only have one site anyway we
+use it for now. Another option, which supports virtual hosts but lags dynamic
+content (CGI, SCGI), would be =agate=.
+
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
+services.molly-brown = {
+  hostName = "zuendmasse.de";
+  enable = true;
+  certPath = "/var/lib/acme/zuendmasse.de/cert.pem";
+  keyPath = "/var/lib/acme/zuendmasse.de/key.pem";
+  docBase = "/var/gemini/zuendmasse.de";
+};
+
+#+end_src
+
+We will use the certificate generated for =zuendmasse.de=. This means
+=molly-brown= must be able to read it.
+
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
+systemd.services.molly-brown.serviceConfig.SupplementaryGroups = [ config.security.acme.certs."zuendmasse.de".group ];
+
+#+end_src
+
+And make sure we can connect to the server.
+
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
+#networking.firewall.allowedTCPPorts = [ 1965 ];
 
 #+end_src
 

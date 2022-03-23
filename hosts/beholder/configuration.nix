@@ -137,7 +137,7 @@
   
     locations."= /.well-known/matrix/server".extraConfig =
       let
-        server = { "m.server" = "zuendmase.de:8448"; };
+        server = { "m.server" = "zuendmasse.de:8448"; };
       in ''
         add_header Content-Type application/json;
         return 200 '${builtins.toJSON server}';

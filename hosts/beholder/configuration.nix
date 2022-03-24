@@ -1,4 +1,4 @@
-{ config, pkgs, mailserver, ... }:
+{ config, lib, pkgs, mailserver, ... }:
 
 {
   imports = [
@@ -193,35 +193,39 @@
     certificateScheme = 3;
   };
   
-  networking.firewall.allowedTCPPorts = [ 8448 1965];
+  networking.firewall.allowedTCPPorts = [ 8448 1965 6697 ];
+  networking.firewall.allowedUDPPorts = [ 2456 2457 2458 ];
   
   services.matrix-synapse = {
     enable = true;
-    database_type = "sqlite3";
-    server_name = "zuendmasse.de";
-  
-    listeners = [
-      {
-        port = 8008;
-        bind_address = "::1";
-        type = "http";
-        tls = false;
-        x_forwarded = true;
-        resources = [
-          {
-            names = [ "client" "federation" ];
-            compress = false;
-          }
-        ];
-      }
+    extraConfigFiles = [
+      /etc/secrets/matrix-registration-config
     ];
+  #  registration_shared_secret = builtins.readFile /etc/secrets/matrix-registration;
   
-    extraConfig = ''
-      max_upload_size: "512M"
-    '';
+    settings = {
+      listeners = [
+        {
+          port = 8008;
+          bind_addresses = [ "::1" ];
+          type = "http";
+          tls = false;
+          x_forwarded = true;
+          resources = [
+            {
+              names = [ "client" "federation" ];
+              compress = false;
+            }
+          ];
+        }
+      ];
   
-    allow_guest_access = false;
-    enable_registration = false;
+      database.name = "sqlite3";
+      server_name = "zuendmasse.de";
+      allow_guest_access = false;
+      enable_registration = false;
+      max_upload_size = "512M";
+    };
   };
   
   services.fail2ban.enable = true;

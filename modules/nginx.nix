@@ -4,7 +4,7 @@
   
   networking.firewall.allowedTCPPorts = [ 80 443 ];
   
-  security.acme.email = lib.mkDefault "ca@zuendmasse.de";
+  security.acme.defaults.email = lib.mkDefault "ca@zuendmasse.de";
   security.acme.acceptTerms = true;
   
   services.nginx = {

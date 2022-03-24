@@ -44,7 +44,7 @@ time =org-babel-tangle= is called.
   description = "NixOS System Configurations";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-21.11";
+    nixpkgs.url = "github:nixos/nixpkgs";
     mailserver = {
       url = "gitlab:simple-nixos-mailserver/nixos-mailserver";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -170,7 +170,7 @@ beholder = nixpkgs.lib.nixosSystem {
 
 
 #+begin_src nix :noweb yes :tangle ./hosts/beholder/configuration.nix :mkdirp yes
-{ config, pkgs, mailserver, ... }:
+{ config, lib, pkgs, mailserver, ... }:
 
 {
   imports = [
@@ -498,35 +498,42 @@ already in the datebase we don't need to enable any type of registration. The
 
 #+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
 
-networking.firewall.allowedTCPPorts = [ 8448 1965];
+networking.firewall.allowedTCPPorts = [ 8448 1965 6697 ];
+networking.firewall.allowedUDPPorts = [ 2456 2457 2458 ];
 
 services.matrix-synapse = {
   enable = true;
-  database_type = "sqlite3";
-  server_name = "zuendmasse.de";
-
-  listeners = [
-    {
-      port = 8008;
-      bind_address = "::1";
-      type = "http";
-      tls = false;
-      x_forwarded = true;
-      resources = [
-        {
-          names = [ "client" "federation" ];
-          compress = false;
-        }
-      ];
-    }
+  extraConfigFiles = [
+    /etc/secrets/matrix-registration-config
   ];
+#  registration_shared_secret = builtins.readFile /etc/secrets/matrix-registration;
 
-  extraConfig = ''
-    max_upload_size: "512M"
-  '';
+  settings = {
+    listeners = [
+      {
+        port = 8008;
+        bind_addresses = [ "::1" ];
+        type = "http";
+        tls = false;
+        x_forwarded = true;
+        resources = [
+          {
+            names = [ "client" "federation" ];
+            compress = false;
+          }
+        ];
+      }
+    ];
 
-  allow_guest_access = false;
-  enable_registration = false;
+    database.name = "sqlite3";
+    server_name = "zuendmasse.de";
+    allow_guest_access = false;
+    enable_registration = false;
+    max_upload_size = "512M";
+  };
+};
+
+#+end_src
 };
 
 #+end_src
@@ -727,7 +734,7 @@ virtual hosts.
 
 #+begin_src nix :noweb-ref nginx/basic :noweb-sep ""
 
-security.acme.email = lib.mkDefault "ca@zuendmasse.de";
+security.acme.defaults.email = lib.mkDefault "ca@zuendmasse.de";
 security.acme.acceptTerms = true;
 
 #+end_src

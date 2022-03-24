@@ -232,7 +232,7 @@
   
   services.nextcloud = {
     enable = true;
-    package = pkgs.nextcloud22;
+    package = pkgs.nextcloud23;
     hostName = "cloud.zuendmasse.de";
     https = true;
   

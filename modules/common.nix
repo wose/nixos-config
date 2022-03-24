@@ -24,6 +24,16 @@
   
 
   
+  nixpkgs = {
+    overlays = [
+      (self: super:
+        (import ../pkgs/default.nix { pkgs = super; })
+      )
+    ];
+  };
+  
+
+  
   users.mutableUsers = true;
   
 }

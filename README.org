@@ -646,6 +646,64 @@ And make sure we can connect to the server.
 
 #+end_src
 
+* Packages
+Some packages which are not in =nixpkgs= upstream yet.
+
+#+begin_src nix :tangle ./pkgs/default.nix :mkdirp yes
+
+{ pkgs ? import <nixpkgs> { } }:
+
+{
+  gotosocial = pkgs.callPackage ./gotosocial { };
+}
+
+#+end_src
+
+** gotosocial
+
+#+begin_src nix :tangle ./pkgs/gotosocial/default.nix :mkdirp yes
+
+{ buildGoModule, fetchFromGitHub, lib, pkgs }:
+
+buildGoModule rec {
+  pname = "gotosocial";
+  version = "0.2.1";
+
+  src = fetchFromGitHub {
+    owner = "superseriousbusiness";
+    repo = "gotosocial";
+    rev = "v${version}";
+    sha256 = "ldU2wzahCjy2rThcBIuzHCSWtUK1jxDEB+QKBv8Aqrw=";
+  };
+
+  vendorSha256 = null;
+
+#+end_src
+
+
+Currently tests are failing because of some hardcoded path. [[https://github.com/superseriousbusiness/gotosocial/issues/412][#412]]
+#+begin_src nix :tangle ./pkgs/gotosocial/default.nix :mkdirp yes
+
+  doCheck = false;
+
+#+end_src
+
+#+begin_src nix :tangle ./pkgs/gotosocial/default.nix :mkdirp yes
+
+  tags = [ "netgo" "osusergo" "static_build" ];
+  ldflags = ["-s" "-w" "-extldflags '-static'" "-X 'main.Version=${version}'" ];
+
+  meta = with lib; {
+    description = "Golang fediverse server";
+    homepage = "https://docs.gotosocial.org";
+    license = licenses.agpl3Only;
+    maintainer = with maintainers; [ wose ];
+    platforms = platforms.linux;
+  };
+}
+
+#+end_src
+
 * Modules
 ** Common Settings
 
@@ -659,6 +717,8 @@ modules and import it in each host.
   <<common/systempackages>>
 
   <<common/nix>>
+
+  <<common/nixpkgs>>
 
   <<common/userconfig>>
 }
@@ -696,6 +756,23 @@ nix = {
   extraOptions = ''
     experimental-features = nix-command flakes
   '';
+};
+
+#+end_src
+
+*** nixpkgs
+
+We need to create an overlay to inject our own packages which are currently not
+part of upstream =nixpgs=.
+
+#+begin_src nix :noweb-ref common/nixpkgs :noweb-sep ""
+
+nixpkgs = {
+  overlays = [
+    (self: super:
+      (import ../pkgs/default.nix { pkgs = super; })
+    )
+  ];
 };
 
 #+end_src

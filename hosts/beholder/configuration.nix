@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     ../../modules/common.nix
     ../../modules/nginx.nix
+    ../../modules/gotosocial.nix
     ../../users/wose.nix
     ../../users/linda.nix
   ];
@@ -295,6 +296,30 @@
   systemd.services.molly-brown.serviceConfig.SupplementaryGroups = [ config.security.acme.certs."zuendmasse.de".group ];
   
   #networking.firewall.allowedTCPPorts = [ 1965 ];
+  
+  local.services.gotosocial = {
+    enable = true;
+    host = "social.zuendmasse.de";
+    protocol = "https";
+    port = 8081;
+    bind-address = "localhost";
+    db-type = "sqlite";
+    db-address = "/var/lib/gotosocial/gotosocial.db";
+    web-template-base-dir = "/home/wose/gotosocial/template/";
+    web-asset-base-dir = "/home/wose/gotosocial/assets/";
+    storage-local-base-path = "/var/lib/gotosocial/storage";
+  };
+  
+  services.nginx.virtualHosts."social.zuendmasse.de" = {
+    enableACME = true;
+    forceSSL = true;
+    locations."/" = {
+      proxyPass = "http://localhost:8081";
+      extraConfig = ''
+        proxy_set_header Host $host;
+      '';
+    };
+  };
   
 
   system.stateVersion = "21.05";

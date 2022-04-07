@@ -2,4 +2,5 @@
 
 {
   gotosocial = pkgs.callPackage ./gotosocial { };
+  misskey = pkgs.callPackage ./misskey { };
 }

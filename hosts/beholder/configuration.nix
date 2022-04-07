@@ -6,6 +6,7 @@
     ../../modules/common.nix
     ../../modules/nginx.nix
     ../../modules/gotosocial.nix
+    ../../modules/misskey.nix
     ../../users/wose.nix
     ../../users/linda.nix
   ];
@@ -298,7 +299,7 @@
   #networking.firewall.allowedTCPPorts = [ 1965 ];
   
   local.services.gotosocial = {
-    enable = true;
+    enable = false;
     settings = {
       host = "social.zuendmasse.de";
       accounts-registration-open = false;
@@ -321,6 +322,50 @@
     };
   };
   
+  services.misskey = {
+    enable = true;
+    settings = {
+      url = "https://mk.yuka.dev/";
+      port = 11231;
+      id = "aid";
+      db = {
+        host = "/run/postgresql";
+        port = config.services.postgresql.port;
+        user = "misskey";
+        db = "misskey";
+      };
+      redis = {
+        host = "localhost";
+        port = config.services.redis.servers.misskey.port;
+      };
+    };
+  };
+  
+  services.postgresql = {
+    enable = true;
+    ensureDatabases = [ "misskey" ];
+    ensureUsers = [
+      {
+        name = "misskey";
+        ensurePermissions."DATABASE misskey" = "ALL PRIVILEGES";
+      }
+    ];
+  };
+  
+  services.redis.servers.misskey = {
+    enable = true;
+    bind = "127.0.0.1";
+    port = 16434;
+  };
+  
+  services.nginx.virtualHosts."social.zuendmasse.de" = {
+    enableACME = true;
+    forceSSL = true;
+    locations = {
+      "/" = {
+        proxyPass = "http://127.0.0.1:${toString config.services.misskey.settings.port}/";
+        proxyWebsockets = true;
+      };
     };
   };
   

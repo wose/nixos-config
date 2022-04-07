@@ -181,6 +181,7 @@ beholder = nixpkgs.lib.nixosSystem {
     ../../modules/common.nix
     ../../modules/nginx.nix
     ../../modules/gotosocial.nix
+    ../../modules/misskey.nix
     ../../users/wose.nix
     ../../users/linda.nix
   ];
@@ -685,6 +686,55 @@ services.nginx.virtualHosts."social.zuendmasse.de" = {
 };
 
 #+end_src
+
+***** Misskey
+
+#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
+
+services.misskey = {
+  enable = true;
+  settings = {
+    url = "https://mk.yuka.dev/";
+    port = 11231;
+    id = "aid";
+    db = {
+      host = "/run/postgresql";
+      port = config.services.postgresql.port;
+      user = "misskey";
+      db = "misskey";
+    };
+    redis = {
+      host = "localhost";
+      port = config.services.redis.servers.misskey.port;
+    };
+  };
+};
+
+services.postgresql = {
+  enable = true;
+  ensureDatabases = [ "misskey" ];
+  ensureUsers = [
+    {
+      name = "misskey";
+      ensurePermissions."DATABASE misskey" = "ALL PRIVILEGES";
+    }
+  ];
+};
+
+services.redis.servers.misskey = {
+  enable = true;
+  bind = "127.0.0.1";
+  port = 16434;
+};
+
+services.nginx.virtualHosts."social.zuendmasse.de" = {
+  enableACME = true;
+  forceSSL = true;
+  locations = {
+    "/" = {
+      proxyPass = "http://127.0.0.1:${toString config.services.misskey.settings.port}/";
+      proxyWebsockets = true;
+    };
   };
 };
 
@@ -699,6 +749,7 @@ Some packages which are not in =nixpkgs= upstream yet.
 
 {
   gotosocial = pkgs.callPackage ./gotosocial { };
+  misskey = pkgs.callPackage ./misskey { };
 }
 
 #+end_src
@@ -746,6 +797,106 @@ Currently tests are failing because of some hardcoded path. [[https://github.com
   };
 }
 
+#+end_src
+
+** Misskey
+
+This package definition is part of a pending pull reuqest to add Misskey to nixpkgs. [[https://github.com/NixOS/nixpkgs/pull/161855][#161855]]
+
+#+begin_src nix :tangle ./pkgs/misskey/default.nix :mkdirp yes
+{ lib
+, stdenv
+, fetchFromGitHub
+, fetchYarnDeps
+, fixup_yarn_lock
+, yarn
+, nodejs
+, python3
+, pkg-config
+, glib
+, vips
+}:
+
+let
+  version = "12.108.1";
+
+  src = fetchFromGitHub {
+    owner = "misskey-dev";
+    repo = "misskey";
+    rev = version;
+    sha256 = "sha256-NTspyTNy3cqc43+YLeCKRR46D7BvtIWoNCmwgqykHgs=";
+  };
+
+  deps = fetchYarnDeps {
+    yarnLock = "${src}/yarn.lock";
+    sha256 = "sha256-1NEeuBVp5e7RtFzYeT4nTGxGs2oeTxqiz20pEZXmcbo=";
+  };
+  backendDeps = fetchYarnDeps {
+    yarnLock = "${src}/packages/backend/yarn.lock";
+    sha256 = "sha256-G01hkYthBCZnsvPNaTIXSgTN9/1inJXhh34umxfxUsc=";
+  };
+  clientDeps = fetchYarnDeps {
+    yarnLock = "${src}/packages/client/yarn.lock";
+    sha256 = "sha256-LwGjqHN59KditL3igVP1/TZ7cZSbrZopOl9A0c1nlW8=";
+  };
+
+in stdenv.mkDerivation {
+  pname = "misskey";
+  inherit version src;
+
+  nativeBuildInputs = [ fixup_yarn_lock yarn nodejs python3 pkg-config ];
+  buildInputs = [ glib vips ];
+
+  buildPhase = ''
+    export HOME=$PWD
+    export NODE_ENV=production
+    # Build node modules
+    fixup_yarn_lock yarn.lock
+    fixup_yarn_lock packages/backend/yarn.lock
+    fixup_yarn_lock packages/client/yarn.lock
+    yarn config --offline set yarn-offline-mirror ${deps}
+    yarn install --offline --frozen-lockfile --ignore-engines --ignore-scripts --no-progress
+    (
+      cd packages/backend
+      yarn config --offline set yarn-offline-mirror ${backendDeps}
+      yarn install --offline --frozen-lockfile --ignore-engines --ignore-scripts --no-progress
+    )
+    (
+      cd packages/client
+      yarn config --offline set yarn-offline-mirror ${clientDeps}
+      yarn install --offline --frozen-lockfile --ignore-engines --ignore-scripts --no-progress
+    )
+    patchShebangs node_modules
+    patchShebangs packages/backend/node_modules
+    patchShebangs packages/client/node_modules
+    (
+      cd packages/backend/node_modules/re2
+      npm_config_nodedir=${nodejs} npm run rebuild
+    )
+    (
+      cd packages/backend/node_modules/sharp
+      npm_config_nodedir=${nodejs} ../.bin/node-gyp rebuild
+    )
+    yarn build
+  '';
+
+  installPhase = ''
+    mkdir -p $out/packages/client
+    ln -s /var/lib/misskey $out/files
+    ln -s /run/misskey $out/.config
+    cp -r locales node_modules built $out
+    cp -r packages/backend $out/packages/backend
+    cp -r packages/client/assets $out/packages/client/assets
+  '';
+
+  meta = with lib; {
+    description = "Interplanetary microblogging platform. 🚀";
+    homepage = "https://misskey-hub.net/";
+    license = licenses.agpl3;
+    maintainers = with maintainers; [ yuka kloenk ];
+    platforms = platforms.unix;
+  };
+}
 #+end_src
 
 * Modules
@@ -1368,6 +1519,82 @@ systemd.services.gotosocial = {
   };
 };
 
+#+end_src
+** Misskey service
+
+This service definition is part of a pending pull request to add Misskey to nixpkgs. [[https://github.com/NixOS/nixpkgs/pull/161855][#161855]]
+
+#+begin_src nix :tangle modules/misskey.nix
+{ config, lib, pkgs, ... }:
+
+let
+  cfg = config.services.misskey;
+
+  settingsFormat = pkgs.formats.yaml {};
+  configFile = settingsFormat.generate "misskey-config.yml" cfg.settings;
+in {
+  options = {
+    services.misskey = with lib; {
+      enable = mkEnableOption "misskey";
+
+      settings = mkOption {
+        type = settingsFormat.type;
+        default = {};
+        description = ''
+          Configuration for Misskey, see
+          <link xlink:href="https://github.com/misskey-dev/misskey/blob/develop/.config/example.yml"/>
+          for supported settings.
+        '';
+      };
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    documentation.enable = false;
+
+    systemd.services.misskey = {
+      after = [ "network-online.target" "postgresql.service" ];
+      wantedBy = [ "multi-user.target" ];
+      preStart = ''
+        ${pkgs.envsubst}/bin/envsubst -i "${configFile}" > /run/misskey/default.yml
+        cd ${pkgs.misskey}/packages/backend
+        ./node_modules/.bin/typeorm migration:run
+      '';
+      serviceConfig = {
+        StateDirectory = "misskey";
+        StateDirectoryMode = "700";
+        RuntimeDirectory = "misskey";
+        RuntimeDirectoryMode = "700";
+        ExecStart = "${pkgs.nodejs}/bin/node --experimental-json-modules ${pkgs.misskey}/packages/backend/built/index.js";
+        TimeoutSec = 60;
+
+        # implies RemoveIPC=, PrivateTmp=, NoNewPrivileges=, RestrictSUIDSGID=,
+        # ProtectSystem=strict, ProtectHome=read-only
+        DynamicUser = true;
+        LockPersonality = true;
+        PrivateDevices = true;
+        PrivateUsers = true;
+        ProtectClock = true;
+        ProtectControlGroups = true;
+        ProtectHome = true;
+        ProtectHostname = true;
+        ProtectKernelLogs = true;
+        ProtectProc = "invisible";
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        RestrictAddressFamilies = "AF_INET AF_INET6 AF_UNIX AF_NETLINK";
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        SystemCallArchitectures = "native";
+        SystemCallFilter = "@system-service";
+        UMask = "0077";
+      };
+      environment.NODE_ENV = "production";
+    };
+  };
+  meta.maintainers = with lib.maintainers; [ yuka ];
+  meta.doc = ./misskey.xml;
+}
 #+end_src
 
 ** nginx

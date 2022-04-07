@@ -299,15 +299,18 @@
   
   local.services.gotosocial = {
     enable = true;
-    host = "social.zuendmasse.de";
-    protocol = "https";
-    port = 8081;
-    bind-address = "localhost";
-    db-type = "sqlite";
-    db-address = "/var/lib/gotosocial/gotosocial.db";
-    web-template-base-dir = "/home/wose/gotosocial/template/";
-    web-asset-base-dir = "/home/wose/gotosocial/assets/";
-    storage-local-base-path = "/var/lib/gotosocial/storage";
+    settings = {
+      host = "social.zuendmasse.de";
+      accounts-registration-open = false;
+      protocol = "https";
+      port = 8081;
+      bind-address = "127.0.0.1";
+      db-type = "sqlite";
+      db-address = "/var/lib/gotosocial/gotosocial.db";
+      web-template-base-dir = "./template/";
+      web-asset-base-dir = "./assets/";
+      storage-local-base-path = "/var/lib/gotosocial/storage";
+    };
   };
   
   services.nginx.virtualHosts."social.zuendmasse.de" = {
@@ -315,9 +318,9 @@
     forceSSL = true;
     locations."/" = {
       proxyPass = "http://localhost:8081";
-      extraConfig = ''
-        proxy_set_header Host $host;
-      '';
+    };
+  };
+  
     };
   };
   

@@ -367,6 +367,22 @@ environment.systemPackages = with pkgs; [
 ];
 #+end_src
 **** Services
+***** PostgreSQL
+
+#+begin_src nix :noweb yes :noweb-ref beholder/cfg/services :noweb-sep ""
+
+services.postgresql = {
+  enable = true;
+  ensureDatabases = [
+    <<beholder/db>>
+  ];
+  ensureUsers = [
+    <<beholder/db/users>>
+  ];
+};
+
+#+end_src
+
 ***** OpenSSH
 
 We disable password authentication and root login. This will also open port 22
@@ -590,16 +606,6 @@ services.nextcloud = {
   maxUploadSize = "2048M";
 };
 
-services.postgresql = {
-  enable = true;
-  ensureDatabases = [ "nextcloud" ];
-  ensureUsers = [
-    { name = "nextcloud";
-      ensurePermissions."DATABASE nextcloud" = "ALL PRIVILEGES";
-    }
-  ];
-};
-
 systemd.services."nextcloud-setup" = {
   requires = ["postgresql.service"];
   after = ["postgresql.service"];
@@ -613,6 +619,20 @@ services.nginx.virtualHosts."cloud.zuendmasse.de" = {
   '';
 };
 
+#+end_src
+
+Let's make sure the nextcloud database exists.
+
+#+begin_src nix :noweb-ref beholder/db
+"nextcloud"
+#+end_src
+
+And add the corresponding db user with the required rights.
+
+#+begin_src nix :noweb-ref beholder/db/users
+{ name = "nextcloud";
+  ensurePermissions."DATABASE nextcloud" = "ALL PRIVILEGES";
+}
 #+end_src
 
 ***** Gemini
@@ -677,13 +697,13 @@ We use =nginx= as reverse proxy and let it manage the SSL stuff.
 
 #+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
 
-services.nginx.virtualHosts."social.zuendmasse.de" = {
-  enableACME = true;
-  forceSSL = true;
-  locations."/" = {
-    proxyPass = "http://localhost:8081";
-  };
-};
+# services.nginx.virtualHosts."social.zuendmasse.de" = {
+#   enableACME = true;
+#   forceSSL = true;
+#   locations."/" = {
+#     proxyPass = "http://localhost:8081";
+#   };
+# };
 
 #+end_src
 
@@ -694,7 +714,7 @@ services.nginx.virtualHosts."social.zuendmasse.de" = {
 services.misskey = {
   enable = true;
   settings = {
-    url = "https://mk.yuka.dev/";
+    url = "https://social.zuendmasse.de/";
     port = 11231;
     id = "aid";
     db = {
@@ -708,17 +728,6 @@ services.misskey = {
       port = config.services.redis.servers.misskey.port;
     };
   };
-};
-
-services.postgresql = {
-  enable = true;
-  ensureDatabases = [ "misskey" ];
-  ensureUsers = [
-    {
-      name = "misskey";
-      ensurePermissions."DATABASE misskey" = "ALL PRIVILEGES";
-    }
-  ];
 };
 
 services.redis.servers.misskey = {
@@ -738,6 +747,20 @@ services.nginx.virtualHosts."social.zuendmasse.de" = {
   };
 };
 
+#+end_src
+
+Make sure the db exists.
+
+#+begin_src nix :noweb-ref beholder/db
+"misskey"
+#+end_src
+
+And add the corresponding db user with the required rights.
+
+#+begin_src nix :noweb-ref beholder/db/users
+{ name = "misskey";
+  ensurePermissions."DATABASE misskey" = "ALL PRIVILEGES";
+}
 #+end_src
 
 * Packages
@@ -1566,7 +1589,7 @@ in {
         RuntimeDirectory = "misskey";
         RuntimeDirectoryMode = "700";
         ExecStart = "${pkgs.nodejs}/bin/node --experimental-json-modules ${pkgs.misskey}/packages/backend/built/index.js";
-        TimeoutSec = 60;
+        TimeoutSec = 240;
 
         # implies RemoveIPC=, PrivateTmp=, NoNewPrivileges=, RestrictSUIDSGID=,
         # ProtectSystem=strict, ProtectHome=read-only

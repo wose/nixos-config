@@ -102,6 +102,22 @@
   ];
 
   
+  services.postgresql = {
+    enable = true;
+    ensureDatabases = [
+      "nextcloud"
+      "misskey"
+    ];
+    ensureUsers = [
+      { name = "nextcloud";
+        ensurePermissions."DATABASE nextcloud" = "ALL PRIVILEGES";
+      }
+      { name = "misskey";
+        ensurePermissions."DATABASE misskey" = "ALL PRIVILEGES";
+      }
+    ];
+  };
+  
   services.openssh = {
     enable = true;
     permitRootLogin = "no";
@@ -263,16 +279,6 @@
     maxUploadSize = "2048M";
   };
   
-  services.postgresql = {
-    enable = true;
-    ensureDatabases = [ "nextcloud" ];
-    ensureUsers = [
-      { name = "nextcloud";
-        ensurePermissions."DATABASE nextcloud" = "ALL PRIVILEGES";
-      }
-    ];
-  };
-  
   systemd.services."nextcloud-setup" = {
     requires = ["postgresql.service"];
     after = ["postgresql.service"];
@@ -314,18 +320,18 @@
     };
   };
   
-  services.nginx.virtualHosts."social.zuendmasse.de" = {
-    enableACME = true;
-    forceSSL = true;
-    locations."/" = {
-      proxyPass = "http://localhost:8081";
-    };
-  };
+  # services.nginx.virtualHosts."social.zuendmasse.de" = {
+  #   enableACME = true;
+  #   forceSSL = true;
+  #   locations."/" = {
+  #     proxyPass = "http://localhost:8081";
+  #   };
+  # };
   
   services.misskey = {
     enable = true;
     settings = {
-      url = "https://mk.yuka.dev/";
+      url = "https://social.zuendmasse.de/";
       port = 11231;
       id = "aid";
       db = {
@@ -339,17 +345,6 @@
         port = config.services.redis.servers.misskey.port;
       };
     };
-  };
-  
-  services.postgresql = {
-    enable = true;
-    ensureDatabases = [ "misskey" ];
-    ensureUsers = [
-      {
-        name = "misskey";
-        ensurePermissions."DATABASE misskey" = "ALL PRIVILEGES";
-      }
-    ];
   };
   
   services.redis.servers.misskey = {

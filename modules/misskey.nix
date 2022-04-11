@@ -39,7 +39,7 @@ in {
         RuntimeDirectory = "misskey";
         RuntimeDirectoryMode = "700";
         ExecStart = "${pkgs.nodejs}/bin/node --experimental-json-modules ${pkgs.misskey}/packages/backend/built/index.js";
-        TimeoutSec = 60;
+        TimeoutSec = 240;
 
         # implies RemoveIPC=, PrivateTmp=, NoNewPrivileges=, RestrictSUIDSGID=,
         # ProtectSystem=strict, ProtectHome=read-only

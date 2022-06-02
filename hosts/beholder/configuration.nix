@@ -301,6 +301,7 @@
     forceSSL = true;
     extraConfig = ''
       add_header Strict-Transport-Security "max-age=31536000" always;
+      client_body_buffer_size 512k;
     '';
   };
   

@@ -138,6 +138,18 @@
   
     locations."/" = {
       root = "/var/www/zuendmasse.de";
+      extraConfig = ''
+        rewrite ^/blog/2018/02/23/lets-write-an-embedded-hal-driver.*$ /lets-write-an-embedded-hal-driver.html permanent;
+        rewrite ^/blog/2018/01/21/gdb-\+-svd.*$ /gdb-svd.html permanent;
+        rewrite ^/blog/2018/01/19/pdf-multi-view.*$ /multi-view-pdf.html permanent;
+        rewrite ^/blog/2017/11/03/datenspuren.*$ /datenspuren.html permanent;
+        rewrite ^/blog/2017/08/26/embedded-rust.*$ /embedded-rust.html permanent;
+        rewrite ^/blog/2017/08/22/reset.*$ /reset.html permanent;
+        rewrite ^/blog/$ / permanent;
+        rewrite ^/blog$ / permanent;
+        rewrite ^/assets/.*/(.+)$ /images/$1 permanent;
+        rewrite ^/about.*$ /pages/about.html permanent;
+      '';
     };
   
     listen = [

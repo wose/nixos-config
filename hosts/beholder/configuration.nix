@@ -95,6 +95,7 @@
   
 
   environment.systemPackages = with pkgs; [
+    borgbackup
     emacs-nox
     fd
     pinentry-emacs

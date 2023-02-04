@@ -595,7 +595,7 @@ files need to be readable by the =nextcloud= user.
 
 services.nextcloud = {
   enable = true;
-  package = pkgs.nextcloud23;
+  package = pkgs.nextcloud24;
   hostName = "cloud.zuendmasse.de";
   https = true;
 

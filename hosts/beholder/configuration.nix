@@ -265,9 +265,10 @@
   
   services.nextcloud = {
     enable = true;
-    package = pkgs.nextcloud24;
+    package = pkgs.nextcloud25;
     hostName = "cloud.zuendmasse.de";
     https = true;
+    enableBrokenCiphersForSSE = false;
   
     caching = {
       apcu = true;
@@ -276,6 +277,7 @@
     };
   
     config = {
+      defaultPhoneRegion = "DE";
       adminuser = "admin";
       adminpassFile = "/etc/secrets/nextcloud-pass";
       dbtype = "pgsql";

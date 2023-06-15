@@ -134,6 +134,13 @@
     root = "/var/www/erlija.de";
   };
   
+  services.nginx.virtualHosts."wittch.de" = {
+    serverAliases = [ "www.wittch.de" "wittch.de" ];
+    enableACME = true;
+    forceSSL = true;
+    root = "/var/www/wittch.de";
+  };
+  
   services.nginx.virtualHosts."zuendmasse.de" = {
     serverAliases = [ "zuendmasse.de" "www.zuendmasse.de" ];
     enableACME = true;
@@ -200,7 +207,7 @@
     enablePop3Ssl = false;
   
     fqdn = "beholder.zuendmasse.de";
-    domains = [ "braunglasmafia.de" "erlija.de" ];
+    domains = [ "braunglasmafia.de" "erlija.de" "wittch.de" ];
   
     loginAccounts = {
       "wose@erlija.de" = {
@@ -208,10 +215,19 @@
         aliases = [
           "postmaster@erlija.de"
           "abuse@erlija.de"
-          "webmaster@erlija,de"
+          "webmaster@erlija.de"
           "borsti@braunglasmafia.de"
           "postmaster@braunglasmafia.de"
           "abuse@braunglasmafia.de"
+        ];
+      };
+  
+      "wose@wittch.de" = {
+        hashedPasswordFile = "/home/wose/.hashed_passwd_wittch.de";
+        aliases = [
+          "postmaster@wittch.de"
+          "abuse@wittch.de"
+          "webmaster@wittch.de"
         ];
       };
   

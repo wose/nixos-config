@@ -241,7 +241,6 @@ another RAID array.
 
 boot.loader.grub = {
   enable = true;
-  version = 2;
   efiSupport = false;
   devices = [ "/dev/sda" ];
   mirroredBoots = [
@@ -394,8 +393,8 @@ in the firewall.
 services.openssh = {
   enable = true;
   settings = {
-    permitRootLogin = "no";
-    passwordAuthentication = false;
+    PermitRootLogin = "no";
+    PasswordAuthentication = false;
   };
 };
 
@@ -547,7 +546,7 @@ mailserver = {
     };
   };
 
-  certificateScheme = 3;
+  certificateScheme = "acme-nginx";
 };
 
 #+end_src

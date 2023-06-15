@@ -21,7 +21,6 @@
   
   boot.loader.grub = {
     enable = true;
-    version = 2;
     efiSupport = false;
     devices = [ "/dev/sda" ];
     mirroredBoots = [
@@ -122,8 +121,8 @@
   services.openssh = {
     enable = true;
     settings = {
-      permitRootLogin = "no";
-      passwordAuthentication = false;
+      PermitRootLogin = "no";
+      PasswordAuthentication = false;
     };
   };
   
@@ -239,7 +238,7 @@
       };
     };
   
-    certificateScheme = 3;
+    certificateScheme = "acme-nginx";
   };
   
   networking.firewall.allowedTCPPorts = [ 8448 1965 6697 ];

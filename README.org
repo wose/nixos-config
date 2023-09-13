@@ -705,6 +705,23 @@ And add the corresponding db user with the required rights.
 }
 #+end_src
 
+To enable preview generation for larger images we need to increase the maximum
+preview memory within the nextcloud config file. There is currently no
+method to add extra options to the config, but we can simply create another
+file within the nextcloud config directory. The file name must end in
+=.config.php= and will then be automatically loaded by nextcloud.
+
+#+begin_src nix
+
+# TODO find out how to write this to /var/lib/nextcloud/config/preview.config.php
+
+<?php
+$CONFIG = [
+    'preview_max_memory' => 512,
+];
+
+#+end_src
+
 ***** Gemini
 
 NixOS has service options to configure the Gemini server =molly-brown=. This

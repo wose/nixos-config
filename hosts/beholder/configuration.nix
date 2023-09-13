@@ -275,6 +275,30 @@
     };
   };
   
+  services.gitea = {
+      enable = true;
+      package = pkgs.forgejo;
+      appName = "forgejo";
+      settings = {
+        service.DISABLE_REGISTRATION = true;
+        server = {
+          HTTP_PORT = 3200;
+          HTTP_ADDR = "127.0.0.1";
+          DOMAIN = "git.zuendmasse.de";
+          ROOT_URL = "https://git.zuendmasse.de";
+          LANDING_PAGE = "/explore/repos";
+        };
+      };
+    };
+  
+  services.nginx.virtualHosts."git.zuendmasse.de" = {
+    enableACME = true;
+    forceSSL = true;
+    locations."/" = {
+      proxyPass = "http://localhost:3200";
+    };
+  };
+  
   services.fail2ban.enable = true;
   
   services.nextcloud = {

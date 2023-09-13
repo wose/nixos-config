@@ -1,7 +1,5 @@
 #+TITLE: NixOS System Configurations
 
-
-
 * Flakes
 
 ** Setup
@@ -103,6 +101,7 @@ Since we are using encrypted partitions and have no way to unlock them without a
 remote connection, we need to make sure the network interface is available
 within the =initrd=. In this case we depend on the =r8169= module to be
 available during boot. Also tell the =initrd= whick device needs encryption.
+We also need to set =MAILADDR= for =mdadm= or the =mdmon= service will crash.
 
 #+begin_src nix :noweb-ref beholder/hardware/boot :noweb-sep ""
 boot = {
@@ -111,6 +110,7 @@ boot = {
     availableKernelModules = [ "ahci" "sd_mod" "r8169" ];
     luks.devices."data".device = "/dev/disk/by-uuid/db20b995-5cab-45ae-b1b9-0ba20a73eda6";
   };
+  swraid.mdadmConf = "MAILADDR root";
 };
 #+end_src
 

@@ -9,6 +9,7 @@
       availableKernelModules = [ "ahci" "sd_mod" "r8169" ];
       luks.devices."data".device = "/dev/disk/by-uuid/db20b995-5cab-45ae-b1b9-0ba20a73eda6";
     };
+    swraid.mdadmConf = "MAILADDR root";
   };
 
   fileSystems."/" =

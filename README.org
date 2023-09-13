@@ -974,6 +974,14 @@ in stdenv.mkDerivation {
 #+end_src
 
 * Modules
+** TODOs
+*** TODO Valheim Service
+- https://github.com/Shou/nixos-configuration/blob/master/systems/nitori/valheim-server.nix
+- https://github.com/lukebfox/nix-configs/blob/main/modules/nixos/services/valheim/default.nix
+- https://github.com/johnviolano/nixos-system/blob/main/valheim-service.nix
+- https://github.com/lukebfox/nix-configs/blob/main/modules/nixos/services/valheim/default.nix
+*** TODO Move zuendmasse mailserver to beholder
+
 ** Common Settings
 
 We'll need/want somethings to be available on all hosts. We can export it into

@@ -180,7 +180,6 @@ beholder = nixpkgs.lib.nixosSystem {
     ./hardware-configuration.nix
     ../../modules/common.nix
     ../../modules/nginx.nix
-    ../../modules/gotosocial.nix
     ../../modules/misskey.nix
     ../../users/wose.nix
     ../../users/linda.nix
@@ -712,42 +711,6 @@ And make sure we can connect to the server.
 #+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
 
 #networking.firewall.allowedTCPPorts = [ 1965 ];
-
-#+end_src
-
-***** GoToSocial
-
-#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
-
-local.services.gotosocial = {
-  enable = false;
-  settings = {
-    host = "social.zuendmasse.de";
-    accounts-registration-open = false;
-    protocol = "https";
-    port = 8081;
-    bind-address = "127.0.0.1";
-    db-type = "sqlite";
-    db-address = "/var/lib/gotosocial/gotosocial.db";
-    web-template-base-dir = "./template/";
-    web-asset-base-dir = "./assets/";
-    storage-local-base-path = "/var/lib/gotosocial/storage";
-  };
-};
-
-#+end_src
-
-We use =nginx= as reverse proxy and let it manage the SSL stuff.
-
-#+begin_src nix :noweb-ref beholder/cfg/services :noweb-sep ""
-
-# services.nginx.virtualHosts."social.zuendmasse.de" = {
-#   enableACME = true;
-#   forceSSL = true;
-#   locations."/" = {
-#     proxyPass = "http://localhost:8081";
-#   };
-# };
 
 #+end_src
 
